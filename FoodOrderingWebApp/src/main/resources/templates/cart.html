@@ -4,21 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cart</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <header>
+    <div class="container my-4">
+    <a href="/menu" class="btn btn-secondary mb-3">← Back to Menu</a>
         <h1>Your Cart</h1>
-    </header>
-    <main>
-        <div id="cart-items">
-            <!-- Cart items will be dynamically loaded here -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Check if cartItems is empty -->
+                <tr th:if="${#lists.isEmpty(cartItems)}">
+                    <td colspan="5" class="text-center">Your cart is empty.</td>
+                </tr>
+                <!-- Iterate over cartItems -->
+                <tr th:each="item : ${cartItems}">
+                    <td th:text="${item.menuItem.name}"></td>
+                    <td th:text="'&#8377;' + ${item.menuItem.price}"></td>
+                    <td th:text="${item.quantity}"></td>
+                    <td th:text="'&#8377;' + ${item.quantity * item.menuItem.price}"></td>
+                    <td>
+                        <!-- Fixed Remove Button -->
+                        <button class="btn btn-sm btn-danger remove-button" th:attr="data-id=${item.menuItem.id}">Remove</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="text-end">
+            <h3>Total: INR <span th:text="${total}"></span></h3>
+            <a href="/checkout" class="btn btn-success">Proceed to Checkout</a>
         </div>
-        <div id="total">
-            <h2>Total: $<span id="total-price">0.00</span></h2>
-        </div>
-        <button id="checkout-button">Checkout</button>
-    </main>
-    <script src="js/script.js"></script>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add event listeners to all remove buttons
+            document.querySelectorAll('.remove-button').forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+
+                    const menuItemId = button.getAttribute('data-id');
+
+                    // Send an AJAX request to remove the item
+                    const response = await fetch('/removeFromCart', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ menuItemId })
+                    });
+
+                    if (response.ok) {
+                        alert('Item removed from cart!');
+                        // Remove the row from the table
+                        const row = button.closest('tr');
+                        row.remove();
+
+                        // Update the total dynamically
+                        updateTotal();
+                    } else {
+                        alert('Failed to remove item from cart');
+                    }
+                });
+            });
+
+            // Function to update the total dynamically
+            function updateTotal() {
+                let total = 0;
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    const totalCell = row.querySelector('td:nth-child(4)');
+                    if (totalCell) {
+                        const itemTotal = parseFloat(totalCell.textContent.replace('&#8377;', '')) || 0;
+                        total += itemTotal;
+                    }
+                });
+                document.querySelector('h3 span').textContent = `$${total.toFixed(2)}`;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -57,9 +57,11 @@ public class UserController {
         return "login"; // Return to login page with error message
     }
 
+
     @GetMapping("/logout")
     public String logoutUser(HttpSession session) {
         session.invalidate(); // Clear the session
         return "redirect:/"; // Redirect to the main page
     }
+    
 }
